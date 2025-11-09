@@ -99,31 +99,24 @@ function Debug.DrawPolyFace(topLeft, bottomLeft, bottomRight, topRight, colour)
     Debug.DrawPoly(bottomRight, topRight, topLeft, colour)
 end
 
----@param coords vector3
 ---@param min vector3
 ---@param max vector3
 ---@param min2 vector3
 ---@param max2 vector3
 ---@param colour? vector4
-function Debug.DrawCuboid(coords, min, max, min2, max2, colour)
+function Debug.DrawCuboid(min, max, min2, max2, colour)
     if not colour then
         colour = defaultColour
     end
-    local a = coords + min
-    local b = coords + max
-    local c = coords + min2
-    local d = coords + max2
-    local e = coords + vec3(min.x, min.y, max.z)
-    local f = coords + vec3(max.x, max.y, min.z)
-    local g = coords + vec3(min2.x, min2.y, max.z)
-    local h = coords + vec3(max2.x, max2.y, max.z)
-    Debug.DrawPolyFace(a, c, f, d, colour) -- Bottom
-    Debug.DrawPolyFace(g, e, h, b, colour) -- Top
-    Debug.DrawPolyFace(e, a, d, h, colour) -- Front
-    Debug.DrawPolyFace(b, f, c, g, colour) -- Back
-    Debug.DrawPolyFace(g, c, a, e, colour) -- Left
-    Debug.DrawPolyFace(h, d, f, b, colour) -- Right
+    local a = vec3(min.x, min.y, max.z)
+    local b = vec3(max.x, max.y, min.z)
+    local c = vec3(min2.x, min2.y, max.z)
+    local d = vec3(max2.x, max2.y, min.z)
+    Debug.DrawPolyFace(min, min2, b, d, colour) -- Bottom
+    Debug.DrawPolyFace(c, a, max2, max, colour) -- Top
+    Debug.DrawPolyFace(a, min, d, max2, colour) -- Front
+    Debug.DrawPolyFace(max, b, min2, c, colour) -- Back
+    Debug.DrawPolyFace(c, min2, min, a, colour) -- Left
+    Debug.DrawPolyFace(max2, d, b, max, colour) -- Right
 end
-
-
 return Debug
