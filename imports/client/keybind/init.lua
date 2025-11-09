@@ -14,7 +14,7 @@ function Keybind:new(keybind)
         if keybind.onPressed then
             keybind:onPressed()
         end
-    end)
+    end, false)
 
     RegisterCommand('-' .. keybind.command, function()
         keybind.pressed = false
@@ -24,7 +24,7 @@ function Keybind:new(keybind)
         if keybind.onReleased then
             keybind:onReleased()
         end
-    end)
+    end, false)
 
     RegisterKeyMapping('+' .. keybind.command, keybind.description, keybind.defaultMapper, keybind.defaultParameter)
 
@@ -34,5 +34,6 @@ function Keybind:new(keybind)
 
     return keybind
 end
+
 
 return Keybind
