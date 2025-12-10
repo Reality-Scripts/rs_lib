@@ -1,6 +1,6 @@
 body {
     position: relative;
-    margin: calc(3.1vw * var(--safe-zone)) calc(5vw * var(--safe-zone));
+    margin: calc(5vh * var(--safe-zone)) calc(5vw * var(--safe-zone));
 }
 
 iframe {
