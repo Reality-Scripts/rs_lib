@@ -32,7 +32,7 @@ end
 
 ---@param model string
 function LocalPlayer:SetModel(model)
-    Entity.LoadModel(self.model)
+    Entity.LoadModel(model)
     self.model, self.hash = model, joaat(model)
     SetPlayerModel(self.id, self.hash)
     self.handle = PlayerPedId()
@@ -52,5 +52,6 @@ end
 function LocalPlayer:SetInvincible(invincible)
     return SetPlayerInvincible(self.id, invincible)
 end
+
 
 return LocalPlayer
