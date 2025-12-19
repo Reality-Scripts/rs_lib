@@ -19,4 +19,5 @@ server_script 'resource/server/init.lua'
 
 nui_page 'clipboard' 'clipboard.html'
 
-nui_page 'list' 'list/index.html'
+nui_page 'menu' 'menu/index.html'
+
