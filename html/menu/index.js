@@ -42,22 +42,52 @@ let menuFirstVisibleItemIndex
 
 let menuItem
 
-function drawComponents() {
+function drawHeader(element, header) {
+    if (header === undefined)
+        return element.remove()
+
+    const {text, textAlign, font, color, backgroundColor, backgroundImage} = header
+
+    if (text !== undefined)
+        element.innerText = text
+
+    if (textAlign !== undefined)
+        element.style.textAlign = textAlign
+
+    if (font !== undefined)
+        element.style.fontFamily = font
+
+    if (color !== undefined)
+        element.style.color = color
+
+    if (backgroundColor !== undefined)
+        element.style.backgroundColor = backgroundColor
+
+    if (backgroundImage !== undefined)
+        element.style.backgroundImage = `url(${backgroundImage})`
+}
+
+function drawPosition() {
     positionElement.innerText = `${menuItemIndex + 1}/${menuItems.length}`
-    const {description} = menuItems[menuItemIndex]
-    if (description)
-        descriptionElement.innerText = description
-    else
-        descriptionElement.replaceChildren()
 }
 
 function drawMenuItems() {
     menuFirstVisibleItemIndex = menuItemIndex < menuMaxVisibleItems ? 0 : menuItemIndex - menuMaxVisibleItems + 1
     for (const item of menuItems.slice(menuFirstVisibleItemIndex, menuFirstVisibleItemIndex + menuMaxVisibleItems))
         menuItemsElement.append(createMenuItemElement(item))
+}
+
+function drawSelectedMenuItem() {
     menuItem = menuItemsElement.children[menuItemIndex - menuFirstVisibleItemIndex]
     menuItem.classList.add('selected')
-    drawComponents()
+}
+
+function drawDescription() {
+    const {description} = menuItems[menuItemIndex]
+    if (description)
+        descriptionElement.innerText = description
+    else
+        descriptionElement.replaceChildren()
 }
 
 const messages = {
@@ -69,27 +99,24 @@ const messages = {
 
         element.firstElementChild.style.alignSelf = align
 
-        const headerElement = element.querySelector('div.header')
-        if (header === undefined)
-            headerElement.remove()
-        else if (header.text)
-            headerElement.innerText = header.text
-
-        if (title !== undefined)
-            element.querySelector('div.title').innerText = title
-
         positionElement = element.querySelector('div.position')
-        if (items.length <= maxVisibleItems)
-            element.querySelector('div.arrows').remove()
-        descriptionElement = element.querySelector('div.description')
-
         menuItemsElement = element.querySelector('div.items')
+        descriptionElement = element.querySelector('div.description')
 
         menuItems = items
         menuItemIndex = itemIndex
         menuMaxVisibleItems = maxVisibleItems
 
+        drawHeader(element.querySelector('div.header'), header)
+        if (title !== undefined)
+            element.querySelector('div.title').innerText = title
+        if (items.length <= maxVisibleItems)
+            element.querySelector('div.arrows').remove()
+
+        drawPosition()
         drawMenuItems()
+        drawSelectedMenuItem()
+        drawDescription()
 
 		document.body.replaceChildren(element)
     },
@@ -99,41 +126,41 @@ const messages = {
     move(index) {
         if (index < 0 || index >= menuItems.length) return
         if (index === menuItemIndex) return
-        const lastVisibleItemIndex = menuFirstVisibleItemIndex + menuMaxVisibleItems
-        if (index < menuFirstVisibleItemIndex) {
-            const indexOffset = menuFirstVisibleItemIndex - index
+
+        menuItem.classList.remove('selected')
+        menuItemIndex = index
+
+        drawPosition()
+
+        const lastVisibleItemIndex = menuFirstVisibleItemIndex + menuMaxVisibleItems - 1
+        if (menuItemIndex < menuFirstVisibleItemIndex) {
+            const indexOffset = menuFirstVisibleItemIndex - menuItemIndex
             if (indexOffset < menuMaxVisibleItems) {
-                for (let elementIndex = menuFirstVisibleItemIndex - 1; elementIndex >= index; elementIndex--) {
+                for (let elementIndex = menuFirstVisibleItemIndex - 1; elementIndex >= menuItemIndex; elementIndex--) {
                     menuItemsElement.lastElementChild.remove()
                     menuItemsElement.prepend(createMenuItemElement(menuItems[elementIndex]))
                 }
                 menuFirstVisibleItemIndex -= indexOffset
             } else {
                 menuItemsElement.replaceChildren()
-                menuItemIndex = index
                 drawMenuItems()
-                return
             }
-        } else if (index >= lastVisibleItemIndex) {
-            const indexOffset = index - lastVisibleItemIndex + 1
+        } else if (menuItemIndex > lastVisibleItemIndex) {
+            const indexOffset = menuItemIndex - lastVisibleItemIndex
             if (indexOffset < menuMaxVisibleItems) {
-                for (let elementIndex = lastVisibleItemIndex; elementIndex <= index; elementIndex++) {
+                for (let elementIndex = lastVisibleItemIndex + 1; elementIndex <= menuItemIndex; elementIndex++) {
                     menuItemsElement.firstElementChild.remove()
                     menuItemsElement.append(createMenuItemElement(menuItems[elementIndex]))
                 }
                 menuFirstVisibleItemIndex += indexOffset
             } else {
                 menuItemsElement.replaceChildren()
-                menuItemIndex = index
                 drawMenuItems()
-                return
             } 
         }
-        menuItem.classList.remove('selected')
-        menuItemIndex = index
-        menuItem = menuItemsElement.children[index - menuFirstVisibleItemIndex]
-        menuItem.classList.add('selected')
-        drawComponents()
+
+        drawSelectedMenuItem()
+        drawDescription()
     },
     close() {
 		document.body.replaceChildren()
