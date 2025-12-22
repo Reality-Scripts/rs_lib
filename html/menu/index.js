@@ -31,6 +31,8 @@ const Menu = {
         return element.firstElementChild
     },
     createVisibleItems() {
+        if (elements.items.childElementCount)
+            elements.items.replaceChildren()
         for (const item of this.items.slice(
             this.firstVisibleItemIndex =
                 this.index < this.maxVisibleItems ? 0
@@ -41,6 +43,7 @@ const Menu = {
     updateVisibleItems() {
         elements.item.classList.remove('selected')
 
+        /** @todo make this less horrible */
         const lastVisibleItemIndex = Menu.firstVisibleItemIndex + Menu.maxVisibleItems - 1
         if (Menu.index < Menu.firstVisibleItemIndex) {
             const indexOffset = Menu.firstVisibleItemIndex - Menu.index
@@ -50,10 +53,8 @@ const Menu = {
                     elements.items.prepend(Menu.createItem(Menu.items[elementIndex]))
                 }
                 Menu.firstVisibleItemIndex -= indexOffset
-            } else {
-                elements.items.replaceChildren()
+            } else
                 Menu.createVisibleItems()
-            }
         } else if (Menu.index > lastVisibleItemIndex) {
             const indexOffset = Menu.index - lastVisibleItemIndex
             if (indexOffset < Menu.maxVisibleItems) {
@@ -62,10 +63,8 @@ const Menu = {
                     elements.items.append(Menu.createItem(Menu.items[elementIndex]))
                 }
                 Menu.firstVisibleItemIndex += indexOffset
-            } else {
-                elements.items.replaceChildren()
+            } else
                 Menu.createVisibleItems()
-            } 
         }
     },
     /**
@@ -153,6 +152,8 @@ const messages = {
         Menu.updateDescription()
     },
     close() {
+        if (!document.body.childElementCount) return
+
         Menu.items = undefined
         Menu.index = undefined
         Menu.maxVisibleItems = undefined
