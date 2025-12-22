@@ -3,30 +3,35 @@ body {
 
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
 
     user-select: none;
     overflow: hidden;
-
-    font-family: sans-serif;
 }
 
 div.menu {
     width: 20em;
+
+    font-family: sans-serif;
 }
 
 div.menu > div.header {
-    line-height: 1em;
     padding: 1rem;
+    line-height: 1em;
     font-size: 2em;
 
     background-size: cover;
+    background-position: center;
 
-    background-color: #007fff;
+    background-color: rgb(0, 150, 255);
+    color: #fff;
 }
 
 div.menu > div.header:empty {
     height: 1em;
+}
+
+div.menu > div.header.hidden {
+    display: none;
 }
 
 div.menu > div.subheader {
@@ -48,6 +53,14 @@ div.menu > div.items > div.item.selected {
 
 div.menu > div.arrows {
     text-align: center;
+}
+
+div.menu > div.arrows.hidden {
+    display: none;
+}
+
+div.menu > div.arrows::after {
+    content: '⇳';
 }
 
 div.menu > div.description:not(:empty) {

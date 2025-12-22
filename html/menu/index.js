@@ -1,168 +1,170 @@
 /**
- * @param {string} name
- */
-async function TriggerNUICallback(name, data) {
-	return fetch(`https://${GetParentResourceName()}/${name}`, data !== undefined ? {
-        method: 'post',
-        body: JSON.stringify(data)
-    } : undefined).then(response => response.json())
-}
-
-/**
  * @type {Object.<string, HTMLTemplateElement>}
  */
 const templates = {
     menu: document.head.querySelector('template#menu'),
-    item: document.head.querySelector('template#item')
+    item: document.head.querySelector('template#item'),
+    list: document.head.querySelector('template#list'),
 }
-
-/** @typedef {{label: string}} menuItem */
-
 /**
- * @param {HTMLElement} menuItemsElement
- * @param {menuItem} item
+ * @type {Object.<string, HTMLElement>}
  */
-function createMenuItemElement(item) {
-    const menuItemElement = templates.item.content.cloneNode(true)
-    menuItemElement.querySelector('div.label').innerText = item.label
-    return menuItemElement.firstElementChild
-}
+const elements = {}
 
-let positionElement
-let arrowsElement
-let descriptionElement
+/** @typedef {{text: string, fontFamily: string, textAlign: string, color: string, backgroundColor: string, backgroundImage: string}} MenuHeader */
+/** @typedef {'start' | 'center' | 'end'} MenuAlign */
+/** @typedef {{label: string}} MenuItem */
 
-let menuItemsElement
+const Menu = {
+    /**
+     * @param {string} title
+     */
+    updateTitle(title) {
+        elements.title.innerText = title ?? ''
+    },
+    updatePosition() {
+        elements.position.innerText = `${this.index + 1}/${this.items.length}`
+    },
+    createItem({label}) {
+        const element = templates.item.content.cloneNode(true)
+        element.querySelector('div.label').innerText = label
+        return element.firstElementChild
+    },
+    createVisibleItems() {
+        for (const item of this.items.slice(
+            this.firstVisibleItemIndex =
+                this.index < this.maxVisibleItems ? 0
+                : this.index - this.maxVisibleItems + 1,
+            this.firstVisibleItemIndex + this.maxVisibleItems
+        )) elements.items.append(this.createItem(item))
+    },
+    updateVisibleItems() {
+        elements.item.classList.remove('selected')
 
-let menuItems
-let menuItemIndex
-let menuMaxVisibleItems
-
-let menuFirstVisibleItemIndex
-
-let menuItem
-
-function drawHeader(element, header) {
-    if (header === undefined)
-        return element.remove()
-
-    const {text, textAlign, font, color, backgroundColor, backgroundImage} = header
-
-    if (text !== undefined)
-        element.innerText = text
-
-    if (textAlign !== undefined)
-        element.style.textAlign = textAlign
-
-    if (font !== undefined)
-        element.style.fontFamily = font
-
-    if (color !== undefined)
-        element.style.color = color
-
-    if (backgroundColor !== undefined)
-        element.style.backgroundColor = backgroundColor
-
-    if (backgroundImage !== undefined)
-        element.style.backgroundImage = `url(${backgroundImage})`
-}
-
-function drawPosition() {
-    positionElement.innerText = `${menuItemIndex + 1}/${menuItems.length}`
-}
-
-function drawMenuItems() {
-    menuFirstVisibleItemIndex = menuItemIndex < menuMaxVisibleItems ? 0 : menuItemIndex - menuMaxVisibleItems + 1
-    for (const item of menuItems.slice(menuFirstVisibleItemIndex, menuFirstVisibleItemIndex + menuMaxVisibleItems))
-        menuItemsElement.append(createMenuItemElement(item))
-}
-
-function drawSelectedMenuItem() {
-    menuItem = menuItemsElement.children[menuItemIndex - menuFirstVisibleItemIndex]
-    menuItem.classList.add('selected')
-}
-
-function drawDescription() {
-    const {description} = menuItems[menuItemIndex]
-    if (description)
-        descriptionElement.innerText = description
-    else
-        descriptionElement.replaceChildren()
+        const lastVisibleItemIndex = Menu.firstVisibleItemIndex + Menu.maxVisibleItems - 1
+        if (Menu.index < Menu.firstVisibleItemIndex) {
+            const indexOffset = Menu.firstVisibleItemIndex - Menu.index
+            if (indexOffset < Menu.maxVisibleItems) {
+                for (let elementIndex = Menu.firstVisibleItemIndex - 1; elementIndex >= Menu.index; elementIndex--) {
+                    elements.items.lastElementChild.remove()
+                    elements.items.prepend(Menu.createItem(Menu.items[elementIndex]))
+                }
+                Menu.firstVisibleItemIndex -= indexOffset
+            } else {
+                elements.items.replaceChildren()
+                Menu.createVisibleItems()
+            }
+        } else if (Menu.index > lastVisibleItemIndex) {
+            const indexOffset = Menu.index - lastVisibleItemIndex
+            if (indexOffset < Menu.maxVisibleItems) {
+                for (let elementIndex = lastVisibleItemIndex + 1; elementIndex <= Menu.index; elementIndex++) {
+                    elements.items.firstElementChild.remove()
+                    elements.items.append(Menu.createItem(Menu.items[elementIndex]))
+                }
+                Menu.firstVisibleItemIndex += indexOffset
+            } else {
+                elements.items.replaceChildren()
+                Menu.createVisibleItems()
+            } 
+        }
+    },
+    /**
+     * @param {MenuHeader} header
+     */
+    updateHeader(header) {
+        if (header === undefined) {
+            elements.header.classList.add('hidden')
+            elements.header.innerText = ''
+            elements.header.removeAttribute('style')
+            return
+        }
+        elements.header.classList.remove('hidden')
+        const {text, fontFamily, textAlign, color, backgroundColor, backgroundImage} = header
+        elements.header.innerText = text ?? ''
+        Object.assign(elements.header.style, {
+            fontFamily: fontFamily ?? 'unset',
+            textAlign: textAlign,
+            color: color,
+            backgroundColor: backgroundColor,
+            backgroundImage: backgroundImage && `url(${backgroundImage})`
+        })
+    },
+    updateSelectedItem() {
+        elements.item = elements.items.children[this.index - this.firstVisibleItemIndex]
+        elements.item.classList.add('selected')
+    },
+    updateArrows() {
+        elements.arrows.classList[this.items.length > this.maxVisibleItems ? 'remove' : 'add']('hidden')
+    },
+    updateDescription() {
+        elements.description.innerText = this.items[this.index].description ?? ''
+    },
+    /**
+     * @param {MenuAlign} align
+     */
+    updateAlign(align) {
+        elements.menu.firstElementChild.style.alignSelf = align
+    }
 }
 
 const messages = {
     /**
-     * @param {{title: string, items: menuItem[], currentItem: integer, maxItems: integer, align: 'start' | 'center' | 'end'}}
+     * @param {{header: MenuHeader, title: string, items: MenuItem[], index: integer, maxVisibleItems: integer, align: MenuAlign}}
      */
-    open({header, title, items, itemIndex = 0, maxVisibleItems = 7, align = 'start'}) {
-		const element = templates.menu.content.cloneNode(true)
+    open({header, title, items, index = 0, maxVisibleItems = 7, align = 'start'}) {
+        if (!document.body.childElementCount) {
+            elements.menu = templates.menu.content.cloneNode(true)
+            elements.header = elements.menu.querySelector('div.header')
+            elements.title = elements.menu.querySelector('div.title')
+            elements.position = elements.menu.querySelector('div.position')
+            elements.items = elements.menu.querySelector('div.items')
+            elements.arrows = elements.menu.querySelector('div.arrows')
+            elements.description = elements.menu.querySelector('div.description')
+        }
 
-        element.firstElementChild.style.alignSelf = align
+        Menu.items = items
+        Menu.index = Math.min(Math.max(index, 0), Menu.items.length)
+        Menu.maxVisibleItems = maxVisibleItems
 
-        positionElement = element.querySelector('div.position')
-        menuItemsElement = element.querySelector('div.items')
-        descriptionElement = element.querySelector('div.description')
+        Menu.updateHeader(header)
+        Menu.updateTitle(title)
+        Menu.updatePosition()
+        Menu.createVisibleItems()
+        Menu.updateSelectedItem()
+        Menu.updateArrows()
+        Menu.updateDescription()
+        Menu.updateAlign(align)
 
-        menuItems = items
-        menuItemIndex = itemIndex
-        menuMaxVisibleItems = maxVisibleItems
-
-        drawHeader(element.querySelector('div.header'), header)
-        if (title !== undefined)
-            element.querySelector('div.title').innerText = title
-        if (items.length <= maxVisibleItems)
-            element.querySelector('div.arrows').remove()
-
-        drawPosition()
-        drawMenuItems()
-        drawSelectedMenuItem()
-        drawDescription()
-
-		document.body.replaceChildren(element)
+        if (!document.body.childElementCount)
+            document.body.replaceChildren(elements.menu)
     },
     /**
      * @param {integer} index
      */
     move(index) {
-        if (index < 0 || index >= menuItems.length) return
-        if (index === menuItemIndex) return
+        if (Menu.index === undefined) return
+        if (index < 0 || index >= Menu.items.length) return
+        if (index === Menu.index) return
+        Menu.index = index
 
-        menuItem.classList.remove('selected')
-        menuItemIndex = index
-
-        drawPosition()
-
-        const lastVisibleItemIndex = menuFirstVisibleItemIndex + menuMaxVisibleItems - 1
-        if (menuItemIndex < menuFirstVisibleItemIndex) {
-            const indexOffset = menuFirstVisibleItemIndex - menuItemIndex
-            if (indexOffset < menuMaxVisibleItems) {
-                for (let elementIndex = menuFirstVisibleItemIndex - 1; elementIndex >= menuItemIndex; elementIndex--) {
-                    menuItemsElement.lastElementChild.remove()
-                    menuItemsElement.prepend(createMenuItemElement(menuItems[elementIndex]))
-                }
-                menuFirstVisibleItemIndex -= indexOffset
-            } else {
-                menuItemsElement.replaceChildren()
-                drawMenuItems()
-            }
-        } else if (menuItemIndex > lastVisibleItemIndex) {
-            const indexOffset = menuItemIndex - lastVisibleItemIndex
-            if (indexOffset < menuMaxVisibleItems) {
-                for (let elementIndex = lastVisibleItemIndex + 1; elementIndex <= menuItemIndex; elementIndex++) {
-                    menuItemsElement.firstElementChild.remove()
-                    menuItemsElement.append(createMenuItemElement(menuItems[elementIndex]))
-                }
-                menuFirstVisibleItemIndex += indexOffset
-            } else {
-                menuItemsElement.replaceChildren()
-                drawMenuItems()
-            } 
-        }
-
-        drawSelectedMenuItem()
-        drawDescription()
+        Menu.updatePosition()
+        Menu.updateVisibleItems()
+        Menu.updateSelectedItem()
+        Menu.updateDescription()
     },
     close() {
+        Menu.items = undefined
+        Menu.index = undefined
+        Menu.maxVisibleItems = undefined
+
+        elements.menu = undefined
+        elements.header = undefined
+        elements.title = undefined
+        elements.position = undefined
+        elements.items = undefined
+        elements.arrows = undefined
+        elements.description = undefined
+
 		document.body.replaceChildren()
     }
 }
