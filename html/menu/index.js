@@ -102,7 +102,7 @@ const Menu = {
      * @param {MenuAlign} align
      */
     updateAlign(align) {
-        elements.menu.firstElementChild.style.alignSelf = align
+        elements.menu.style.alignSelf = align
     }
 }
 
@@ -112,7 +112,7 @@ const messages = {
      */
     open({header, title, items, index = 0, maxVisibleItems = 7, align = 'start'}) {
         if (!document.body.childElementCount) {
-            elements.menu = templates.menu.content.cloneNode(true)
+            elements.menu = templates.menu.content.cloneNode(true).firstElementChild
             elements.header = elements.menu.querySelector('div.header')
             elements.title = elements.menu.querySelector('div.title')
             elements.position = elements.menu.querySelector('div.position')
