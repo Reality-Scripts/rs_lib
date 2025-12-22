@@ -8,8 +8,8 @@ local Menu
 
 local function openMenu(menu)
     if IsPauseMenuActive() then return end
-    if not menu.itemIndex then
-        menu.itemIndex = 0
+    if not menu.index then
+        menu.index = 0
     end
     if Menu then
         table.insert(History, Menu)
@@ -32,11 +32,11 @@ exports('closeMenu', closeMenu)
 local function moveMenu(index)
     if not Menu then return end
     index = index % #Menu.items
-    if Menu.itemIndex == index then return end
-    Menu.itemIndex = index
-    Nui.SendMessage('menu', 'move', Menu.itemIndex)
+    if Menu.index == index then return end
+    Menu.index = index
+    Nui.SendMessage('menu', 'move', Menu.index)
     if not Menu.moved then return end
-    Menu.moved(Menu.itemIndex)
+    Menu.moved(Menu.index)
 end
 
 exports('moveMenu', moveMenu)
@@ -51,7 +51,7 @@ local menuUp = Keybind:new({
 
 function menuUp:onPressed()
     if not Menu then return end
-    moveMenu(Menu.itemIndex - 1)
+    moveMenu(Menu.index - 1)
 end
 
 local menuDown = Keybind:new({
@@ -64,7 +64,7 @@ local menuDown = Keybind:new({
 
 function menuDown:onPressed()
     if not Menu then return end
-    moveMenu(Menu.itemIndex + 1)
+    moveMenu(Menu.index + 1)
 end
 
 local menuAccept = Keybind:new({
@@ -78,7 +78,7 @@ local menuAccept = Keybind:new({
 function menuAccept:onPressed()
     if not Menu then return end
     if not Menu.selected then return end
-    Menu.selected(Menu.itemIndex)
+    Menu.selected(Menu.index)
 end
 
 local menuCancel = Keybind:new({
